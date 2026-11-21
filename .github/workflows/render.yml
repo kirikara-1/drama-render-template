@@ -17,7 +17,7 @@ on:
         default: '4'
   push:
     branches: [main]
-    paths: ['contents/**', 'src/**']
+    paths: ['contents/**', 'src/**', 'scripts/**']
 
 permissions:
   contents: read
@@ -64,17 +64,17 @@ jobs:
           ASSET_REPO: ${{ secrets.ASSET_REPO }}
         run: |
           gh api -H "Accept: application/vnd.github.raw" \
-            "repos/$ASSET_REPO/contents/${{ inputs.shots_path }}" \
+            "repos/$ASSET_REPO/contents/${{ inputs.shots_path || 'shots.json' }}" \
             > contents/shots.json
 
       - name: 安装依赖
         run: npm ci || npm install
 
       - name: 生成 props
-        run: node scripts/build-props.mjs --shots "${{ inputs.shots_path }}" --out props.json
+        run: node scripts/build-props.mjs --shots "${{ inputs.shots_path || 'contents/shots.json' }}" --out props.json
 
       - name: 渲染成片
-        run: npx remotion render ShortDrama out/video.mp4 --props=props.json --concurrency=${{ inputs.concurrency }}
+        run: npx remotion render ShortDrama out/video.mp4 --props=props.json --concurrency=${{ inputs.concurrency || '4' }}
 
       - name: 交付编码
         run: node scripts/assemble.mjs out/video.mp4 out/final.mp4
