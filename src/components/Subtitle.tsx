@@ -26,6 +26,20 @@ const wrapCJK = (text: string, perLine = 13): string[] => {
     rest = rest.slice(cut).trim();
   }
   if (rest) lines.push(rest);
+
+  // 避免最后一行的孤字（"的。"这种），从上一行挪几个字过来
+  if (lines.length > 1) {
+    const last = lines[lines.length - 1];
+    if (last.length <= 3) {
+      const prev = lines[lines.length - 2];
+      const shift = Math.min(4 - last.length, prev.length - 5);
+      if (shift > 0) {
+        lines[lines.length - 2] = prev.slice(0, prev.length - shift);
+        lines[lines.length - 1] = prev.slice(prev.length - shift) + last;
+      }
+    }
+  }
+
   return lines;
 };
 
