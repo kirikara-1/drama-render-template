@@ -39,6 +39,21 @@ const useNvenc = args.includes('--nvenc');
 const lufs = flag('--lufs', '-16');
 const crf = flag('--crf', '18');
 
+// 没音轨的片子（纯画面 demo）不能套 loudnorm，会直接报错
+const hasAudio = (() => {
+  try {
+    const out = execFileSync(
+      'ffprobe',
+      ['-v', 'error', '-select_streams', 'a:0', '-show_entries', 'stream=codec_type', '-of', 'csv,p=0'],
+      { encoding: 'utf8' },
+    );
+    return out.trim().startsWith('audio');
+  } catch {
+    return false;
+  }
+})();
+if (!hasAudio) console.warn('[assemble] 输入没有音轨，跳过音量归一');
+
 const videoCodec = useNvenc
   ? ['-c:v', 'h264_nvenc', '-preset', 'p5', '-rc', 'vbr', '-cq', '19', '-b:v', '6M']
   : ['-c:v', 'libx264', '-preset', 'slow', '-crf', crf];
@@ -47,23 +62,29 @@ const ffmpegArgs = [
   '-y',
   '-i',
   input,
-  '-af',
-  `loudnorm=I=${lufs}:TP=-1.5:LRA=11`,
+  '-map',
+  '0:v:0',
+];
+
+if (hasAudio) {
+  ffmpegArgs.push('-map', '0:a:0', '-af', `loudnorm=I=${lufs}:TP=-1.5:LRA=11`);
+}
+
+ffmpegArgs.push(
   ...videoCodec,
   '-profile:v',
   'high',
   '-pix_fmt',
   'yuv420p',
-  '-c:a',
-  'aac',
-  '-b:a',
-  '192k',
-  '-ar',
-  '48000',
   '-movflags',
   '+faststart',
-  output,
-];
+);
+
+if (hasAudio) {
+  ffmpegArgs.push('-c:a', 'aac', '-b:a', '192k', '-ar', '48000');
+}
+
+ffmpegArgs.push(output);
 
 console.info(`[assemble] ${useNvenc ? 'NVENC 硬编' : 'x264 软编'}，音量 ${lufs} LUFS`);
 execFileSync('ffmpeg', ffmpegArgs, { stdio: 'inherit' });
