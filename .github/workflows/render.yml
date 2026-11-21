@@ -76,6 +76,9 @@ jobs:
       - name: 渲染成片
         run: npx remotion render ShortDrama out/video.mp4 --props=props.json --concurrency=${{ inputs.concurrency || '4' }}
 
+      - name: 安装 ffmpeg
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg
+
       - name: 交付编码
         run: node scripts/assemble.mjs out/video.mp4 out/final.mp4
 
