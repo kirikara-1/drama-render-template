@@ -1,0 +1,90 @@
+name: render
+
+on:
+  workflow_dispatch:
+    inputs:
+      shots_path:
+        description: '分镜表路径（相对仓库根）'
+        required: true
+        default: 'contents/shots.json'
+      release_tag:
+        description: '素材 Release 标签，如 assets-ep01；留空则跳过拉取'
+        required: false
+        default: ''
+      concurrency:
+        description: '渲染并发数（ubuntu-latest 建议 4）'
+        required: false
+        default: '4'
+  push:
+    branches: [main]
+    paths: ['contents/**', 'src/**']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: render-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: 检出模板仓
+        uses: actions/checkout@v4
+
+      - name: 准备 Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      # —— 素材来自私有仓的 Release，不放进本仓 ——
+      - name: 拉取镜头素材
+        if: inputs.release_tag != ''
+        env:
+          GH_TOKEN: ${{ secrets.ASSET_TOKEN }}
+          ASSET_REPO: ${{ secrets.ASSET_REPO }}
+        run: |
+          mkdir -p public/shots
+          gh release download "${{ inputs.release_tag }}" \
+            --repo "$ASSET_REPO" \
+            --pattern "*.mp4" \
+            --dir public/shots \
+            --clobber
+          ls -lh public/shots
+
+      # —— 分镜表也从私有仓拉，公开仓里不留任何台词 ——
+      - name: 拉取分镜表
+        if: inputs.release_tag != ''
+        env:
+          GH_TOKEN: ${{ secrets.ASSET_TOKEN }}
+          ASSET_REPO: ${{ secrets.ASSET_REPO }}
+        run: |
+          gh api -H "Accept: application/vnd.github.raw" \
+            "repos/$ASSET_REPO/contents/${{ inputs.shots_path }}" \
+            > contents/shots.json
+
+      - name: 安装依赖
+        run: npm ci || npm install
+
+      - name: 生成 props
+        run: node scripts/build-props.mjs --shots "${{ inputs.shots_path }}" --out props.json
+
+      - name: 渲染成片
+        run: npx remotion render ShortDrama out/video.mp4 --props=props.json --concurrency=${{ inputs.concurrency }}
+
+      - name: 交付编码
+        run: node scripts/assemble.mjs out/video.mp4 out/final.mp4
+
+      - name: 上传成片
+        uses: actions/upload-artifact@v4
+        with:
+          name: short-drama-${{ github.run_number }}
+          path: out/final.mp4
+          retention-days: 30
+
+      - name: 打印产物
+        run: ls -lh out/

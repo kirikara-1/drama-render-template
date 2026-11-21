@@ -1,0 +1,36 @@
+{
+  "series": "示例短剧",
+  "title": "第 01 集",
+  "episode": "EP01",
+  "hook": "她收到了三年前自己寄出的那封信。",
+  "nextTeaser": "下集：信里写的那个人，还活着。",
+  "bgm": "",
+  "introSeconds": 3,
+  "outroSeconds": 4,
+  "shots": [
+    {
+      "id": "s01",
+      "file": "shots/s01.mp4",
+      "text": "这封信，是我三年前写给自己的。",
+      "durationInFrames": 90,
+      "transition": "cut",
+      "zoom": 0.05
+    },
+    {
+      "id": "s02",
+      "file": "shots/s02.mp4",
+      "text": "邮戳上的日期，是我离开南京的那天。",
+      "durationInFrames": 90,
+      "transition": "cut",
+      "zoom": 0.05
+    },
+    {
+      "id": "s03",
+      "file": "shots/s03.mp4",
+      "text": "可信封背面有一行字，不是我的笔迹。",
+      "durationInFrames": 105,
+      "transition": "fade",
+      "zoom": 0.08
+    }
+  ]
+}

@@ -1,0 +1,9 @@
+node_modules/
+out/
+props.json
+public/shots/*.mp4
+public/shots/*.mov
+public/audio/*.mp3
+public/audio/*.wav
+.DS_Store
+*.log

@@ -1,0 +1,24 @@
+{
+  "name": "drama-render-template",
+  "version": "0.1.0",
+  "private": true,
+  "description": "竖屏 AI 短剧的渲染层：片头 / 镜头拼接 / 字幕 / 片尾，Actions 可跑",
+  "scripts": {
+    "studio": "remotion studio",
+    "props": "node scripts/build-props.mjs",
+    "render": "node scripts/build-props.mjs && remotion render ShortDrama out/video.mp4 --props=props.json",
+    "assemble": "node scripts/assemble.mjs out/video.mp4 out/final.mp4",
+    "still": "remotion still ShortDrama out/frame.png --frame=45",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@remotion/cli": "^4.0.545",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "remotion": "^4.0.545"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.31",
+    "typescript": "^7.0.2"
+  }
+}
